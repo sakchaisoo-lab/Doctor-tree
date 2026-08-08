@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#16a34a">
+  <title>Doctor-tree</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🌱 Doctor-tree</h1>
+    <p class="subtitle">สแกนสุขภาพต้นไม้ด้วยกล้อง</p>
+
+    <div class="camera-box">
+      <video id="camera" autoplay playsinline></video>
+      <canvas id="canvas" hidden></canvas>
+      <img id="preview" alt="ภาพต้นไม้ที่สแกน" hidden>
+    </div>
+
+    <div class="buttons">
+      <button id="startBtn">📷 เปิดกล้อง</button>
+      <button id="scanBtn" disabled>🔍 สแกนต้นไม้</button>
+      <label class="upload">
+        🖼️ เลือกรูปจากเครื่อง
+        <input id="fileInput" type="file" accept="image/*" hidden>
+      </label>
+    </div>
+
+    <section id="result" class="result">
+      <h2>ผลการตรวจ</h2>
+      <p id="resultText">ถ่ายรูปหรือเลือกรูปต้นไม้เพื่อเริ่มตรวจ</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
