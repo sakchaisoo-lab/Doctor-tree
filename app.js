@@ -7,7 +7,6 @@ const fileInput = document.getElementById('fileInput');
 const resultText = document.getElementById('resultText');
 const loadingText = document.getElementById('loadingText');
 
-// อัปเดต API Key ใหม่เรียบร้อยแล้ว
 const API_KEY = "2b10CczstW4rLbTuLwcYZuPwe"; 
 let stream = null;
 
