@@ -80,3 +80,52 @@ function analyzeImage(source) {
     resultText.innerHTML = "⚪ <b>ตรวจไม่ชัดเจน</b><br>ลองถ่ายให้เห็นใบชัดขึ้น แสงเพียงพอ และให้ใบกินพื้นที่ในภาพมากขึ้น";
   }
 }
+// ฟังก์ชันส่งภาพไปวิเคราะห์ด้วย AI
+async function analyzeTreeImage(base64Image) {
+    const loadingText = document.getElementById('loadingText');
+    const resultDiv = document.getElementById('analysisResult');
+
+    if (loadingText) loadingText.style.display = 'block';
+    if (resultDiv) resultDiv.innerHTML = '';
+
+    const apiKey = "ใส่_API_KEY_ของคุณที่นี่"; 
+    
+    try {
+        const response = await fetch('https://plant.id/api/v3/health_assessment', {
+            method: 'POST',
+            headers: {
+                'Api-Key': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                images: [base64Image],
+                latitude: 16.4322,
+                longitude: 102.8236
+            })
+        });
+
+        const data = await response.json();
+        if (loadingText) loadingText.style.display = 'none';
+
+        if (data.result && data.result.disease && data.result.disease.suggestions.length > 0) {
+            const diseaseName = data.result.disease.suggestions[0].name;
+            const probability = (data.result.disease.suggestions[0].probability * 100).toFixed(1);
+            
+            if (resultDiv) {
+                resultDiv.innerHTML = `
+                    <div style="background-color: #eef2ff; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                        <h3 style="color: #1e3a8a; margin-bottom: 5px;">ผลการวิเคราะห์</h3>
+                        <p><strong>ข้อสันนิษฐาน:</strong> ${diseaseName}</p>
+                        <p><strong>ความเชื่อมั่น:</strong> ${probability}%</p>
+                    </div>
+                `;
+            }
+        } else {
+            if (resultDiv) resultDiv.innerHTML = '<p>ไม่พบข้อมูลโรคพืชจากภาพนี้</p>';
+        }
+    } catch (error) {
+        if (loadingText) loadingText.style.display = 'none';
+        if (resultDiv) resultDiv.innerHTML = '<p style="color: red;">เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI</p>';
+        console.error('Error:', error);
+    }
+}
