@@ -7,7 +7,8 @@ const fileInput = document.getElementById('fileInput');
 const resultText = document.getElementById('resultText');
 const loadingText = document.getElementById('loadingText');
 
-const API_KEY = "2b10MOd7s1S43LGK2v3iJRyTcO"; 
+// อัปเดต API Key ใหม่เรียบร้อยแล้ว
+const API_KEY = "2b10CczstW4rLbTuLwcYZuPwe"; 
 let stream = null;
 
 // --- 1. ระบบเปิดกล้อง ---
@@ -23,29 +24,28 @@ startBtn.onclick = async () => {
     scanBtn.disabled = false;
     resultText.textContent = "พร้อมสแกนแล้ว — จัดต้นไม้ให้อยู่ในภาพแล้วกด “สแกนต้นไม้”";
   } catch (e) {
-    resultText.textContent = "เปิดกล้องไม่ได้ กรุณาอนุญาตการใช้กล้องแล้วลองใหม่";
+    alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้อง");
   }
 };
 
 // --- 2. ระบบสแกนภาพจากกล้อง ---
 scanBtn.onclick = () => {
   if (!stream) return;
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.width = 600;
+  canvas.height = (video.videoHeight / video.videoWidth) * 600;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
   
-  const data = canvas.toDataURL('image/jpeg', 0.9);
+  const data = canvas.toDataURL('image/jpeg', 0.8);
   preview.src = data;
   preview.hidden = false;
   video.hidden = true;
 
-  // แปลงภาพจาก Canvas เพื่อส่งไปให้ AI
   canvas.toBlob((blob) => {
     if (blob) {
       const file = new File([blob], "tree_scan.jpg", { type: "image/jpeg" });
       analyzeTreeImage(file);
     }
-  }, 'image/jpeg');
+  }, 'image/jpeg', 0.8);
 };
 
 // --- 3. ระบบเลือกรูปภาพจากเครื่อง ---
@@ -53,13 +53,32 @@ fileInput.onchange = () => {
   const file = fileInput.files[0];
   if (!file) return;
 
-  const url = URL.createObjectURL(file);
-  preview.src = url;
-  preview.hidden = false;
-  video.hidden = true;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 800;
+      const scale = maxWidth / img.width;
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-  // ส่งไฟล์รูปภาพไปวิเคราะห์ที่ AI
-  analyzeTreeImage(file);
+      preview.src = canvas.toDataURL('image/jpeg', 0.8);
+      preview.hidden = false;
+      video.hidden = true;
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const resizedFile = new File([blob], file.name, { type: "image/jpeg" });
+          analyzeTreeImage(resizedFile);
+        }
+      }, 'image/jpeg', 0.8);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 };
 
 // --- 4. ฟังก์ชันส่งรูปไปวิเคราะห์ที่ Pl@ntNet API ---
@@ -79,7 +98,7 @@ async function analyzeTreeImage(imageFile) {
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      throw new Error(`เซิร์ฟเวอร์ตอบกลับผิดพลาด: Status ${response.status}`);
     }
 
     const data = await response.json();
@@ -87,7 +106,7 @@ async function analyzeTreeImage(imageFile) {
 
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-    resultText.innerHTML = `<span style="color:red;">❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI กรุณาลองใหม่อีกครั้ง</span>`;
+    resultText.innerHTML = `<span style="color:red;">❌ เกิดข้อผิดพลาด: ${error.message} กรุณาลองใหม่อีกครั้ง</span>`;
   } finally {
     if (loadingText) loadingText.style.display = 'none';
   }
