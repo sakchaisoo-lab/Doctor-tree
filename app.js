@@ -129,3 +129,55 @@ async function analyzeTreeImage(base64Image) {
         console.error('Error:', error);
     }
 }
+// ฟังก์ชันสำหรับส่งรูปภาพไปวิเคราะห์ที่ Pl@ntNet API
+async function analyzeTreeImage(imageFile) {
+    // ระบบจะเก็บรหัสผ่านของคุณไว้ในตัวแปร apiKey ตรงนี้ครับ
+    const apiKey = "2b10MOd7s1S43LGK2v3iJRyTcO"; 
+    const project = "all"; 
+    
+    const formData = new FormData();
+    formData.append("images", imageFile);
+
+    const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${apiKey}`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("ผลการวิเคราะห์:", data);
+        
+        displayResults(data);
+
+    } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+    }
+}
+
+// ฟังก์ชันสำหรับนำผลลัพธ์มาแสดงบนหน้า HTML
+function displayResults(data) {
+    const resultContainer = document.getElementById("result"); 
+    if (!resultContainer) return;
+
+    if (data.results && data.results.length > 0) {
+        const topMatch = data.results[0];
+        const speciesName = topMatch.species.scientificNameWithoutAuthor;
+        const commonName = topMatch.species.commonNames[0] || "ไม่ทราบชื่อทั่วไป";
+        const score = (topMatch.score * 100).toFixed(2);
+
+        resultContainer.innerHTML = `
+            <h3>ผลการสแกนต้นไม้</h3>
+            <p><strong>ชื่อวิทยาศาสตร์:</strong> ${speciesName}</p>
+            <p><strong>ชื่อทั่วไป:</strong> ${commonName}</p>
+            <p><strong>ความแม่นยำ:</strong> ${score}%</p>
+        `;
+    } else {
+        resultContainer.innerHTML = "<p>ไม่พบข้อมูลพืชในรูปภาพนี้</p>";
+    }
+}
